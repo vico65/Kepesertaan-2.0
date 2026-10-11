@@ -34,4 +34,15 @@ class Staff extends Model
     protected $hidden = [
         'passkey',
     ];
+
+    /**
+     * Relasi ke model RiwayatBulananBu (One-to-Many).
+     * Satu staff dapat membina/mengelola banyak riwayat bulanan badan usaha.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function riwayatBulanan(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RiwayatBulananBu::class, 'npp_staff', 'npp');
+    }
 }

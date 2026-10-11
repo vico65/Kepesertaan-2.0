@@ -1,272 +1,124 @@
-# Issue: Fitur Registrasi Staff Baru
+# Issue: Implementasi Master Badan Usaha & Riwayat Bulanan
 
 ## Deskripsi
-Fitur ini bertujuan untuk membuat tabel `staff` di dalam database dan menyediakan API endpoint untuk mendaftarkan staff baru.
+Issue ini berisi perencanaan pembuatan struktur database dan API untuk fitur "Badan Usaha" dan "Riwayat Bulanan Badan Usaha". Implementasi harus dilakukan sesuai dengan panduan dan standar pengembangan web framework (seperti Laravel), mulai dari pembuatan *Migration*, *Model*, *Controller*, hingga *Routing*.
 
-## Kriteria Penerimaan (Acceptance Criteria)
-
-### 1. Struktur Database
-Tabel `staff` harus memiliki struktur sebagai berikut:
-- `npp` (integer, primary key)
-- `name` (varchar 255, not null)
-- `email` (varchar 255, not null, unique)
-- `passkey` (varchar 255, not null, passkey merupakan hash dari bcrypt)
-- `status` (enum: 'active', 'inactive', default: 'active')
-- `created_at` (timestamp, default: current_timestamp)
-- `updated_at` (timestamp, default: current_timestamp on update current_timestamp)
-
-### 2. API Endpoint
-- **Method:** `POST`
-- **Endpoint:** `/api/staff`
-- **Request Body (JSON):**
-  ```json
-  {
-      "name" : "staff",
-      "email" : "staff@gmail.com",
-      "passkey" : "rahasia"
-  }
-  ```
-- **Response Body - Success (JSON, Status Code 201/200):**
-  ```json
-  {
-      "message" : "User berhasil ditambahkan"
-  }
-  ```
-- **Response Body - Error (JSON, Status Code 400/500):**
-  ```json
-  {
-      "message" : "User gagal ditambahkan"
-  }
-  ```
+Setiap kode yang ditulis **WAJIB** diberikan penjelasan/komentar singkat agar mudah di-*review* oleh Lead Developer.
 
 ---
 
-## Tahapan Implementasi (Untuk Junior Programmer / AI)
+## 1. Perencanaan Database (Migrations)
 
-Ikuti tahapan-tahapan di bawah ini secara berurutan menggunakan standar framework **Laravel**. Semua kode yang ditulis harus menyertakan komentar penjelasan agar mudah di-review oleh Lead Programmer.
+### A. Tabel Master Badan Usaha (`master_bu`)
+Tabel ini digunakan untuk menyimpan data master informasi badan usaha.
 
-### Tahap 1: Pembuatan Migration untuk Tabel `staff`
+**Struktur Kolom:**
+- `kode_entitas`: VARCHAR(255) PRIMARY KEY UNIQUE NOT NULL
+- `kode_bu`: VARCHAR(255) UNIQUE NOT NULL
+- `nama_bu`: VARCHAR(255) NOT NULL
+- `nama_dati_2`: VARCHAR(255) NULLABLE
+- `kecamatan_bu`: VARCHAR(255) NULLABLE
+- `kelurahan_bu`: VARCHAR(255) NULLABLE
+- `alamat_bu`: TEXT NULLABLE
+- `jenis_usaha`: VARCHAR(255) NULLABLE
+- `detail_jenis_usaha`: VARCHAR(255) NULLABLE
+- `tmt_bu`: DATE NOT NULL
+- `nama_pimpinan`: VARCHAR(255) NULLABLE
+- `telp_bu`: VARCHAR(50) NULLABLE
+- `email_bu`: VARCHAR(255) NULLABLE
+- `nama_pic`: VARCHAR(255) NULLABLE
+- `jabatan_pic`: VARCHAR(255) NULLABLE
+- `telp_pic`: VARCHAR(50) NULLABLE
+- `hp_pic`: VARCHAR(50) NULLABLE
+- `email_pic`: VARCHAR(255) NULLABLE
+- `created_at`: TIMESTAMP (Terisi otomatis saat baris dibuat)
+- `updated_at`: TIMESTAMP (Terisi otomatis saat baris diubah)
 
-1. Jalankan perintah artisan untuk membuat file migration baru.
-   ```bash
-   php artisan make:migration create_staff_table
-   ```
-2. Buka file migration yang baru saja dibuat di folder `database/migrations/` dan sesuaikan kodenya menjadi seperti berikut:
+### B. Tabel Riwayat Bulanan Badan Usaha (`riwayat_bulanan_bu`)
+Tabel ini menyimpan rekam jejak jumlah karyawan atau riwayat bulanan dari masing-masing badan usaha.
 
-   ```php
-   <?php
+**Struktur Kolom:**
+- `id`: BIGINT AUTO_INCREMENT PRIMARY KEY
+- `kode_entitas`: VARCHAR(255) NOT NULL -> *FOREIGN KEY menunjuk ke `master_bu.kode_entitas` (ON UPDATE CASCADE, ON DELETE CASCADE)*
+- `npp_staff`: INTEGER NULLABLE -> *FOREIGN KEY menunjuk ke tabel `staff.npp` (Kosong/Nullable jika belum ada staff yang memegang)*
+- `periode`: VARCHAR(7) NOT NULL -> *(Format wajib: YYYY-MM, contoh: 2026-10)*
+- `jumlah_tenaga_kerja`: INTEGER DEFAULT 0
+- `jumlah_angkel`: INTEGER DEFAULT 0
+- `jenis_bu`: VARCHAR(50) NULLABLE -> *(Isian otomatis sistem, contoh: Mikro/Kecil/Menengah/Besar)*
+- `created_at`: TIMESTAMP
+- `updated_at`: TIMESTAMP
 
-   use Illuminate\Database\Migrations\Migration;
-   use Illuminate\Database\Schema\Blueprint;
-   use Illuminate\Support\Facades\Schema;
+---
 
-   return new class extends Migration
-   {
-       /**
-        * Run the migrations.
-        */
-       public function up(): void
-       {
-           // Membuat tabel 'staff'
-           Schema::create('staff', function (Blueprint $table) {
-               // npp integer primary key.
-               // Jika npp ini auto increment, gunakan $table->id('npp');
-               // Namun karena spesifikasinya hanya integer primary key (biasanya NIK / Nomor Pokok Pegawai di-input manual), 
-               // kita set sebagai integer biasa dan didefinisikan sebagai primary.
-               $table->integer('npp')->primary(); 
-               
-               // name varchar 255 not null
-               $table->string('name', 255);
-               
-               // email varchar 255 not null unique
-               $table->string('email', 255)->unique();
-               
-               // passkey varchar 255 not null
-               $table->string('passkey', 255);
-               
-               // status enum 'active' 'inactive' default 'active'
-               $table->enum('status', ['active', 'inactive'])->default('active');
-               
-               // Laravel otomatis akan menggunakan current_timestamp untuk created_at
-               // dan 'on update current_timestamp' untuk updated_at jika diset dengan method useCurrent() dan useCurrentOnUpdate()
-               $table->timestamp('created_at')->useCurrent();
-               $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-           });
-       }
+## 2. API Endpoint
 
-       /**
-        * Reverse the migrations.
-        */
-       public function down(): void
-       {
-           // Menghapus tabel 'staff' jika dilakukan rollback
-           Schema::dropIfExists('staff');
-       }
-   };
-   ```
-3. Jalankan perintah migrasi untuk mengaplikasikan pembuatan tabel di database:
-   ```bash
-   php artisan migrate
-   ```
+### Registrasi Master Badan Usaha Baru
 
-### Tahap 2: Pembuatan Model `Staff`
+- **Method:** `POST`
+- **Endpoint:** `/api/badan-usaha`
+- **Tujuan:** Menyimpan pendaftaran atau data Badan Usaha baru ke dalam database.
 
-1. Jalankan perintah artisan untuk membuat file Model.
-   ```bash
-   php artisan make:model Staff
-   ```
-2. Buka file `app/Models/Staff.php` dan sesuaikan kodenya. Karena kita memiliki primary key dan penanganan timestamp yang sedikit berbeda dari default bawaan Laravel, kita perlu mendefinisikan beberapa properti.
+**Request Body (Format JSON):**
+```json
+{
+    "kode_entitas": "000123456",
+    "kode_bu": "BU-9988",
+    "nama_bu": "PT Bina Maju Palembang",
+    "nama_dati_2": "Palembang",
+    "alamat_bu": "Jl. Jend. Sudirman No. 123",
+    "jenis_usaha": "Perdagangan",
+    "nama_pimpinan": "Ahmad Santoso",
+    "email_bu": "info@binamaju.co.id"
+}
+```
 
-   ```php
-   <?php
+**Response Body (Jika Sukses):**
+```json
+{
+    "message": "Badan Usaha berhasil ditambahkan"
+}
+```
 
-   namespace App\Models;
+**Response Body (Jika Gagal / Error):**
+```json
+{
+    "message": "Badan Usaha gagal ditambahkan"
+}
+```
 
-   use Illuminate\Database\Eloquent\Factories\HasFactory;
-   use Illuminate\Database\Eloquent\Model;
+---
 
-   class Staff extends Model
-   {
-       use HasFactory;
+## 3. Tahapan Implementasi (Action Plan)
 
-       // Mendefinisikan nama tabel secara eksplisit 
-       protected $table = 'staff';
+Berikut adalah panduan pengerjaan langkah demi langkah. Anggap framework yang digunakan adalah Laravel.
 
-       // Menentukan primary key, karena kita menggunakan 'npp', bukan 'id' bawaan Laravel
-       protected $primaryKey = 'npp';
+### Tahap 1: Pembuatan File Migrations
+1. Buat migration untuk tabel `master_bu` (misal menggunakan perintah `php artisan make:migration create_master_bu_table`).
+2. Definisikan kolom-kolomnya sesuai dengan struktur di bagian 1A. Pastikan tipe datanya tepat (contoh: `string` untuk `VARCHAR`, `text` untuk `TEXT`, dan `date` untuk tanggal).
+3. Buat migration untuk tabel `riwayat_bulanan_bu` (`php artisan make:migration create_riwayat_bulanan_bu_table`).
+4. Definisikan foreign key dari `kode_entitas` yang mereferensikan `master_bu`. Atur `onUpdate('cascade')` dan `onDelete('cascade')`.
+5. Eksekusi migration (contoh: `php artisan migrate`).
 
-       // Mematikan incrementing jika 'npp' tidak auto-increment dan akan diinput manual.
-       public $incrementing = false;
+### Tahap 2: Pembuatan File Model
+1. Buat Model untuk `MasterBu`. 
+   - Karena primary key bukan standar `id` yang berupa integer, pastikan kamu mendefinisikan `$primaryKey = 'kode_entitas'`, `$keyType = 'string'`, dan `$incrementing = false` pada Model.
+   - Atur properti `$fillable` (atau `$guarded`) untuk menentukan kolom apa saja yang bisa diisi.
+2. Buat Model untuk `RiwayatBulananBu`.
+   - Buat fungsi relasi (misal `belongsTo`) yang menghubungkan model ini dengan `MasterBu`.
 
-       // Menentukan tipe data dari primary key
-       protected $keyType = 'integer';
+### Tahap 3: Pembuatan Validasi & Controller
+1. Buat mekanisme validasi input dari Request (jika di Laravel, gunakan *Form Request* atau fungsi `validate()`). Pastikan `kode_entitas` dan `kode_bu` bernilai `required` dan `unique`.
+2. Buat file `BadanUsahaController` (atau controller yang serupa).
+3. Di dalam controller tersebut, buat method `store` (atau nama fungsi penyimpan).
+4. **Logika Penyimpanan:**
+   - Gunakan blok `try-catch`.
+   - Dalam blok `try`, ambil input JSON, simpan menggunakan metode bawaan model (misal: `MasterBu::create()`). Kembalikan *Response JSON Success*.
+   - Dalam blok `catch`, tangkap jika terjadi *exception* atau error saat query. Kembalikan *Response JSON Error*.
 
-       // Karena di migration kita menggunakan trigger database (useCurrent) untuk timestamp,
-       // kita matikan timestamps bawaan Eloquent agar Laravel tidak menimpanya secara otomatis dengan Carbon,
-       // biarkan MySQL/Database yang mengatur tanggal dan waktunya.
-       public $timestamps = false;
+### Tahap 4: Konfigurasi Routing
+1. Buka file konfigurasi routes API (misal `routes/api.php` di Laravel).
+2. Daftarkan route `POST /badan-usaha` dan arahkan ke method `store` di `BadanUsahaController` yang baru saja dibuat.
 
-       // Mendefinisikan kolom-kolom apa saja yang boleh diisi melalui Mass Assignment
-       protected $fillable = [
-           'npp', 
-           'name',
-           'email',
-           'passkey',
-           'status'
-       ];
-
-       // Menyembunyikan atribut 'passkey' saat model dikembalikan dalam bentuk array/JSON (misal saat dipanggil di API response)
-       protected $hidden = [
-           'passkey',
-       ];
-   }
-   ```
-
-### Tahap 3: Pembuatan Controller `StaffController`
-
-1. Jalankan perintah artisan untuk membuat file Controller.
-   ```bash
-   php artisan make:controller Api/StaffController
-   ```
-2. Buka file `app/Http/Controllers/Api/StaffController.php` dan tulis logika untuk menangani request HTTP.
-
-   ```php
-   <?php
-
-   namespace App\Http\Controllers\Api;
-
-   use App\Http\Controllers\Controller;
-   use Illuminate\Http\Request;
-   use App\Models\Staff;
-   use Illuminate\Support\Facades\Hash;
-   use Illuminate\Support\Facades\Log;
-
-   class StaffController extends Controller
-   {
-       /**
-        * Menangani request untuk menambahkan staff baru
-        */
-       public function store(Request $request)
-       {
-           try {
-               // 1. Validasi input request.
-               // Pastikan data yang dikirim sesuai ketentuan tabel.
-               $validatedData = $request->validate([
-                   // Jika npp di-input oleh user, harus divalidasi juga (uncomment bila perlu)
-                   // 'npp' => 'required|integer|unique:staff,npp',
-                   'name' => 'required|string|max:255',
-                   'email' => 'required|string|email|max:255|unique:staff,email',
-                   'passkey' => 'required|string|min:6',
-               ]);
-
-               // 2. Hash password menggunakan Bcrypt (standar Hash::make di Laravel)
-               $hashedPasskey = Hash::make($request->passkey);
-
-               // 3. Simpan data staff ke database menggunakan model Eloquent
-               $staff = Staff::create([
-                   // 'npp' => $request->npp, // Uncomment jika npp wajib dari request user
-                   'name' => $request->name,
-                   'email' => $request->email,
-                   'passkey' => $hashedPasskey,
-                   // status, created_at, updated_at tidak perlu diisi karena sudah ada default value di DB
-               ]);
-
-               // 4. Return response JSON sukses sesuai spesifikasi
-               return response()->json([
-                   'message' => 'User berhasil ditambahkan'
-               ], 201); // Kode HTTP 201 Created
-
-           } catch (\Exception $e) {
-               // Log error message agar mudah ditelusuri jika ada kegagalan internal
-               Log::error("Error saat menambahkan staff: " . $e->getMessage());
-
-               // Return response JSON gagal sesuai spesifikasi
-               return response()->json([
-                   'message' => 'User gagal ditambahkan'
-               ], 500); // Kode HTTP 500 Internal Server Error
-           }
-       }
-   }
-   ```
-
-### Tahap 4: Konfigurasi Route API
-
-1. Buka file routes untuk API. Tergantung pada versi Laravel (Laravel 10 ada di `routes/api.php`, Laravel 11 mungkin perlu publish API routes dengan perintah `php artisan install:api` jika file tidak ada).
-2. Daftarkan endpoint-nya.
-
-   ```php
-   <?php
-
-   use Illuminate\Http\Request;
-   use Illuminate\Support\Facades\Route;
-   use App\Http\Controllers\Api\StaffController;
-
-   // Mendaftarkan endpoint POST /api/staff yang mengarah ke method store di StaffController
-   Route::post('/staff', [StaffController::class, 'store']);
-   ```
-
-### Tahap 5: Pengujian (Testing)
-
-1. Jalankan development server lokal:
-   ```bash
-   php artisan serve
-   ```
-2. Gunakan **Postman** atau **Insomnia** untuk menembak endpoint:
-   - Method: **POST**
-   - URL: `http://127.0.0.1:8000/api/staff`
-   - Body: Raw -> JSON
-   - Data JSON:
-     ```json
-     {
-         "name" : "staff",
-         "email" : "staff@gmail.com",
-         "passkey" : "rahasia"
-     }
-     ```
-3. Validasi *Response*:
-   - Jika berhasil, response berupa JSON `{"message": "User berhasil ditambahkan"}`.
-   - Jika format body JSON tidak valid/email ganda, aplikasi harusnya return validation error atau error JSON `{"message": "User gagal ditambahkan"}` (sesuai try-catch).
-4. Validasi ke *Database*:
-   - Cek ke table `staff` (via phpMyAdmin / table client lainnya).
-   - Pastikan field `passkey` tidak tersimpan sebagai `"rahasia"`, melainkan sebuah teks panjang acak (hash).
-   - Pastikan field `status`, `created_at`, dan `updated_at` terisi dengan benar secara otomatis.
+### Aturan Wajib
+1. **Berikan Komentar:** Kamu wajib memberikan komentar atau penjelasan pada fungsi dan baris logika penting agar pengerjaanmu bisa di-review dengan mudah oleh Lead Programmer.
+2. **Handle Error Response:** Pastikan error database tidak tereskspos mentah-mentah ke *response*, cukup kembalikan format error JSON yang sudah disepakati di atas.

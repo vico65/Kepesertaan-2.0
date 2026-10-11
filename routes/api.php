@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StaffController;
+use App\Http\Controllers\Api\BadanUsahaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,8 @@ use App\Http\Controllers\Api\StaffController;
 // Endpoint POST /api/staff untuk registrasi user staff baru
 // Memanggil method 'store' pada StaffController
 Route::post('/staff', [StaffController::class, 'store']);
+
+// Endpoint POST /api/badan-usaha untuk registrasi master badan usaha baru
+// Memanggil method 'store' pada BadanUsahaController
+Route::post('/badan-usaha', [BadanUsahaController::class, 'store']);
+

@@ -17,9 +17,22 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => 'password',
+            ]
+        );
+
+        // Jalankan seeder data dummy secara berurutan
+        // PENTING: Urutan harus Staff -> MasterBu -> RiwayatBulananBu
+        // karena riwayat_bulanan_bu memiliki foreign key ke staff dan master_bu
+        $this->call([
+            StaffSeeder::class,
+            MasterBuSeeder::class,
+            RiwayatBulananBuSeeder::class,
         ]);
     }
 }
+

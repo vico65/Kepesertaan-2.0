@@ -76,6 +76,20 @@
             </div>
         </div>
 
+        <!-- Navigation to Badan Usaha View -->
+        <div class="mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 flex items-center justify-between">
+            <div>
+                <div class="text-sm font-semibold text-white flex items-center gap-1.5">
+                    <span>📋</span> Data Badan Usaha
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5">Lihat daftar badan usaha beserta Relationship Officer (RO)</div>
+            </div>
+            <a href="{{ route('badan-usaha.index') }}" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow transition flex items-center gap-1.5">
+                <span>Buka View BU</span>
+                <span>→</span>
+            </a>
+        </div>
+
         <!-- Footer -->
         <div class="mt-6 pt-4 border-t border-slate-700/60 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
             <span>Repositori: <a href="https://github.com/vico65/Kepesertaan-2.0" target="_blank" class="text-blue-400 hover:underline">vico65/Kepesertaan-2.0</a></span>
